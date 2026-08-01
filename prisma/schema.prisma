@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  authId    String?  @unique // Supabase Auth user id
+  name      String
+  phone     String?
+  address   String?
+  orders       Order[]
+  notifications Notification[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum StaffRole {
+  ADMIN
+  RIDER
+}
+
+model Staff {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  password  String    // Contraseña encriptada o simple para demo
+  role      StaffRole @default(RIDER)
+  phone     String?
+  vehicle   String?
+  latitude  Float?
+  longitude Float?
+  orders    Order[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  imageUrl  String?
+  isActive  Boolean   @default(true)
+  products  Product[]
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  imageUrl    String?
+  isFeatured  Boolean     @default(false)
+  isActive    Boolean     @default(true)
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float   // Price at the time of purchase
+  rating    Int?    // Rating given by the customer (1-5)
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_KITCHEN
+  ON_THE_WAY
+  DELIVERED
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  trackingCode String      @unique
+  status       OrderStatus @default(PENDING)
+  totalAmount  Float
+  notes        String?
+  deliveryAddress String?
+  
+  customerId   String
+  customer     Customer    @relation(fields: [customerId], references: [id])
+  
+  riderId      String?
+  rider        Staff?      @relation(fields: [riderId], references: [id])
+  
+  items        OrderItem[]
+  
+  estimatedTime DateTime?
+  feedbackScore Int?
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  title      String
+  message    String
+  type       String   @default("INFO") // INFO or RATE_ORDER
+  read       Boolean  @default(false)
+  
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  orderId    String?
+  
+  createdAt  DateTime @default(now())
+}
