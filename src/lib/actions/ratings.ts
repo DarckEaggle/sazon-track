@@ -31,7 +31,7 @@ export async function getRatingsStats() {
         return {
           id: pr.productId,
           name: product?.name || 'Producto Desconocido',
-          category: product?.category || '',
+          category: product?.categoryId || '',
           averageRating: pr._avg.rating || 0,
           totalRatings: pr._count.rating || 0
         };
